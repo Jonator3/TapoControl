@@ -8,7 +8,7 @@ import subprocess
 from datetime import datetime, time, timedelta
 import re
 
-regex_ipv4 = re.compile("[0-9]{1, 3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")
+regex_ipv4 = re.compile("[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+")
 
 
 def ping(host_ip):
