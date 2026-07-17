@@ -71,6 +71,8 @@ class PowerPlug(object):
             return
         if self.device is None:
             await self.poll_info()
+            if self.device is not None:
+                lm.log("Connected to", self, msg_type=lm.LogType.ConnectionOpen)
         else:
             await self.device.refresh_session()
 
