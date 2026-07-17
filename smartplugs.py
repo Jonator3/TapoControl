@@ -160,7 +160,7 @@ class MasterSlave(object):
             [get_plug(slave) for slave in config["slave"].split(';')],
             off_draw=int(config["off_draw"]),
             on_draw=int(config["on_draw"]),
-            trigger={"any": any, "all": all}.get(config["trigger"], any),
+            trigger={"any": any, "all": all}.get(config.get("trigger", None), any),
             invert=config.get("invert", '0')=='1' or config.get("invert", '0')=='true',
             update_on=config.get("update_on", '1')=='1' or config.get("update_on", '1')=='true',
             update_off=config.get("update_off", '1')=='1' or config.get("update_off", '1')=='true',
@@ -207,7 +207,7 @@ class SyncMasterSlave(object):
         return SyncMasterSlave(
             [get_plug(master) for master in config["master"].split(';')],
             [get_plug(slave) for slave in config["slave"].split(';')],
-            trigger={"any": any, "all": all}.get(config["trigger"], any),
+            trigger={"any": any, "all": all}.get(config.get("trigger", None), any),
             invert=config.get("invert", '0')=='1' or config.get("invert", '0')=='true',
             update_on=config.get("update_on", '1')=='1' or config.get("update_on", '1')=='true',
             update_off=config.get("update_off", '1')=='1' or config.get("update_off", '1')=='true',
@@ -241,7 +241,7 @@ class DevicePingSlave(object):
 
     def __init__(self, masters: List[str], slaves: List[PowerPlug], *, trigger:Callable[[Iterable[object]], bool] = any, invert: bool = False, update_on: bool = True, update_off: bool = True, force: bool = False):
         if any([not regex_ipv4.match(master) for master in masters]):
-            raise ValueError("Masters must be Valid IPv4")
+            raise ValueError("Masters must be Valid IPv4: "+str(masters))
         self.masters = masters
         self.slaves = slaves
         self.trigger = trigger
@@ -256,7 +256,7 @@ class DevicePingSlave(object):
         return DevicePingSlave(
             config["master"].split(';'),
             [get_plug(slave) for slave in config["slave"].split(';')],
-            trigger={"any": any, "all": all}.get(config["trigger"], any),
+            trigger={"any": any, "all": all}.get(config.get("trigger", None), any),
             invert=config.get("invert", '0')=='1' or config.get("invert", '0')=='true',
             update_on=config.get("update_on", '1')=='1' or config.get("update_on", '1')=='true',
             update_off=config.get("update_off", '1')=='1' or config.get("update_off", '1')=='true',
