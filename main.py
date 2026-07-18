@@ -1,6 +1,6 @@
 from configparser import ConfigParser
 import smartplugs
-from smartplugs import MasterSlave, DevicePingSlave, SimpleTimeControl, SyncMasterSlave
+from smartplugs import MasterSlave, DevicePingSlave, SimpleTimeControl, SyncMasterSlave, DelayController
 import asyncio
 import os
 import logging_manager as lm
@@ -18,6 +18,8 @@ con_types = {
     "SyncMasterSlave": SyncMasterSlave,
     "SyncSlave": SyncMasterSlave,
     "ss": SyncMasterSlave,
+    "DelayController": DelayController,
+    "dc": DelayController,
 }
 controls = []
 config = ConfigParser()

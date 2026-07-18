@@ -239,6 +239,66 @@ class SyncMasterSlave(object):
             self.last_update_state = update_state
 
 
+class DelayController(object):
+
+    def __init__(self, masters: List[PowerPlug], slaves: List[PowerPlug], *, delay:int = 30, trigger:Callable[[Iterable[object]], bool] = any, invert: bool = False, update_on: bool = True, update_off: bool = True, force: bool = False):
+        self.masters = masters
+        self.slaves = slaves
+        self.delay = delay
+        self.invert = invert
+        self.trigger = trigger
+        self.force = force
+        self.update_on = update_on
+        self.update_off = update_off
+        self.last_update_state = None
+        self.current_state = None
+        self.mem = []
+
+    @staticmethod
+    def from_config(config):
+        return DelayController(
+            [get_plug(master) for master in config["master"].split(';')],
+            [get_plug(slave) for slave in config["slave"].split(';')],
+            delay=int(config["delay"]),
+            trigger={"any": any, "all": all}.get(config.get("trigger", None), any),
+            invert=config.get("invert", '0')=='1' or config.get("invert", '0')=='true',
+            update_on=config.get("update_on", '1')=='1' or config.get("update_on", '1')=='true',
+            update_off=config.get("update_off", '1')=='1' or config.get("update_off", '1')=='true',
+            force=config.get("force", '0')=='1' or config.get("force", '0')=='true'
+        )
+
+    async def update(self):
+        update_state = None
+        now = datetime.now()
+        master_state = self.trigger([(await master.is_on()) for master in self.masters]) ^ self.invert
+        if self.last_update_state is None:
+            self.last_update_state = not master_state
+        if self.last_update_state:
+            if (not master_state):
+                update_state = False
+                if self.update_off:
+                    self.mem.append((now + timedelta(minutes=self.delay), False))
+        else:
+            if master_state:
+                update_state = True
+                if self.update_on:
+                    self.mem.append((now + timedelta(minutes=self.delay), True))
+        if update_state is not None:
+            self.last_update_state = update_state
+        if len(self.mem) > 0:
+            time, state = self.mem[0]
+            if time <= now:
+                self.current_state = state
+                for slave in self.slaves:
+                    await slave.on(state)
+                    lm.log("Set", slave, update_state, msg_type=lm.LogType.DataUpdated)
+        if self.force and self.current_state is not None:
+            for slave in self.slaves:
+                if slave.is_on() != self.current_state:
+                    await slave.on(state)
+                    lm.log("Set", slave, update_state, msg_type=lm.LogType.DataUpdated)
+
+
 class DevicePingSlave(object):
 
     def __init__(self, masters: List[str], slaves: List[PowerPlug], *, trigger:Callable[[Iterable[object]], bool] = any, invert: bool = False, update_on: bool = True, update_off: bool = True, force: bool = False):
