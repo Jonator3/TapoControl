@@ -301,18 +301,19 @@ class DelayController(object):
                     self.mem.append((now + timedelta(minutes=self.delay), True))
         if update_state is not None:
             self.last_update_state = update_state
-        if len(self.mem) > 0:
+        while len(self.mem) > 0:
             time, state = self.mem[0]
             if time <= now:
                 self.current_state = state
+                del self.mem[0]
                 for slave in self.slaves:
                     await slave.on(state)
-                    lm.log("Set", slave, update_state, msg_type=lm.LogType.DataUpdated)
-        if self.force and self.current_state is not None:
+                    lm.log("Set", slave, state, msg_type=lm.LogType.DataUpdated)
+        if self.force and (self.current_state is not None):
             for slave in self.slaves:
                 if slave.is_on() != self.current_state:
-                    await slave.on(state)
-                    lm.log("Set", slave, update_state, msg_type=lm.LogType.DataUpdated)
+                    await slave.on(self.current_state)
+                    lm.log("Set", slave, self.current_state, msg_type=lm.LogType.DataUpdated)
 
 
 class DevicePingSlave(object):
