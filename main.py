@@ -1,4 +1,6 @@
 from configparser import ConfigParser
+from datetime import timedelta
+
 import smartplugs
 from smartplugs import MasterSlave, DevicePingSlave, SimpleTimeControl, SyncMasterSlave, DelayController
 import asyncio
@@ -23,7 +25,7 @@ con_types = {
 }
 controls = []
 config = ConfigParser()
-config["General"] = {"poll_time": "15", "enable_rest_api": "0"}
+config["General"] = {"poll_time": "5", "cache_time": "15", "enable_rest_api": "0"}
 config["REST_API"] = {"host": "127.0.0.1", "port": "8080"}
 
 
@@ -54,5 +56,6 @@ if __name__ == '__main__':
         con = con_types.get(con_type).from_config(config[control])
         controls.append(con)
     smartplugs.init(config["GENERAL"]["tapo_user"], config["GENERAL"]["tapo_password"])
+    smartplugs.CACHE_TIME = timedelta(seconds=int(config["GENERAL"]["cache_time"]))
     lm.log("Starting Software.\n\t\twith", len(smartplugs.plugs), "Plugs and", len(controls), "Controllers", msg_type=lm.LogType.SystemInfo)
     asyncio.run(loop())

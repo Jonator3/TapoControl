@@ -9,12 +9,19 @@ from datetime import datetime, time, timedelta
 import re
 
 regex_ipv4 = re.compile("[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+")
+EPOCH = datetime(year=1970, month=1, day=1)
+CACHE_TIME = timedelta(seconds=15)
+ping_cache = {}
 
 
 def ping(host_ip):
-    process = subprocess.Popen(['ping', '-W', '1', '-c', '1', host_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    return process.returncode == 0
+    if ping_cache.get(host_ip, (EPOCH, False))[0] + CACHE_TIME < datetime.now():
+        return ping_cache.get(host_ip, (EPOCH, False))[1]
+    else:
+        process = subprocess.Popen(['ping', '-W', '1', '-c', '1', host_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        ping_cache[host_ip] = (datetime.now(), process.returncode == 0)
+        return process.returncode == 0
 
 def stuff_back(s, l=15, c='_'):
     if len(s) < l:
@@ -39,6 +46,11 @@ class PowerPlug(object):
             self.state = False
         self.mac = None
         self.device = None
+        if not self.virtual:
+            self.cache = {
+                "is_on": (EPOCH, False),
+                "power_draw": (EPOCH, -1),
+            }
         asyncio.run(self.reset())
 
     async def poll_info(self):
@@ -89,10 +101,12 @@ class PowerPlug(object):
     async def is_on(self):
         if self.virtual:
             return self.state
-        if self.device is None:
-            return False
-        info = (await self.device.get_device_info()).to_dict()
-        return info["device_on"]
+        elif self.cache["is_on"][0] + CACHE_TIME < datetime.now():
+            if self.device is None:
+                return False
+            info = (await self.device.get_device_info()).to_dict()
+            self.cache["is_on"] = (datetime.now(), info["device_on"])
+        return self.cache["is_on"][1]
 
     async def toggle(self):
         if self.virtual:
@@ -104,9 +118,11 @@ class PowerPlug(object):
     async def power_draw(self):
         if self.virtual:
             return -1
-        if self.device is None:
-            return -1
-        return (await self.device.get_current_power()).to_dict()["current_power"]
+        elif self.cache["power_draw"][0] + CACHE_TIME < datetime.now():
+            if self.device is None:
+                self.cache["power_draw"] = (datetime.now(), -1)
+            self.cache["power_draw"] = (datetime.now(), (await self.device.get_current_power()).to_dict()["current_power"])
+        return self.cache["power_draw"][1]
 
     def __str__(self):
         ip = self.ip
