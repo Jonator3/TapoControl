@@ -60,7 +60,7 @@ class PowerPlug(object):
             try:
                 self.device = await client.p110(self.ip)
             except Exception as e:
-                lm.log("Plug connection error:\n", e, msg_type=lm.LogType.Error)
+                lm.log("Plug connection error:\n\t", type(e), "\n", e, msg_type=lm.LogType.Error)
                 self.device = None
                 return
         info = (await self.device.get_device_info()).to_dict()

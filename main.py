@@ -52,11 +52,11 @@ if __name__ == '__main__':
     if os.path.isfile("config.ini"):
         config.read("config.ini")
     controls = []
+    smartplugs.CACHE_TIME = timedelta(seconds=int(config["GENERAL"]["cache_time"]))
+    smartplugs.init(config["GENERAL"]["tapo_user"], config["GENERAL"]["tapo_password"])
     for control in [sec for sec in config.sections() if sec.startswith("CONTROLLER_")]:
         con_type = config[control]["type"]
         con = con_types.get(con_type).from_config(config[control])
         controls.append(con)
-    smartplugs.init(config["GENERAL"]["tapo_user"], config["GENERAL"]["tapo_password"])
-    smartplugs.CACHE_TIME = timedelta(seconds=int(config["GENERAL"]["cache_time"]))
     lm.log("Starting Software.\n\t\twith", len(smartplugs.plugs), "Plugs, (" + str(len([P for P in smartplugs.plugs.values() if P.virtual])), "Virtual) and", len(controls), "Controllers", msg_type=lm.LogType.SystemInfo)
     asyncio.run(loop())
