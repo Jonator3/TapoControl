@@ -32,12 +32,13 @@ config["REST_API"] = {"host": "127.0.0.1", "port": "8080"}
 async def loop():
     global controls
     try_counter = 0
+    poll_time = float(config["GENERAL"]["poll_time"])
     while try_counter < 5:
         try:
             try_counter += 1
             await smartplugs.ensure_connection()
             await asyncio.gather(*[C.update() for C in controls])
-            await asyncio.sleep(float(config["GENERAL"]["poll_time"]))
+            await asyncio.sleep(poll_time)
             try_counter = 0
         except Exception as e:
             lm.log(str(e), msg_type=lm.LogType.Error)
@@ -57,5 +58,5 @@ if __name__ == '__main__':
         controls.append(con)
     smartplugs.init(config["GENERAL"]["tapo_user"], config["GENERAL"]["tapo_password"])
     smartplugs.CACHE_TIME = timedelta(seconds=int(config["GENERAL"]["cache_time"]))
-    lm.log("Starting Software.\n\t\twith", len(smartplugs.plugs), "Plugs and", len(controls), "Controllers", msg_type=lm.LogType.SystemInfo)
+    lm.log("Starting Software.\n\t\twith", len(smartplugs.plugs), "Plugs, (" + str(len([P for P in smartplugs.plugs.values() if P.virtual])), "Virtual) and", len(controls), "Controllers", msg_type=lm.LogType.SystemInfo)
     asyncio.run(loop())

@@ -57,13 +57,11 @@ class PowerPlug(object):
         if self.virtual:
             return
         if self.device is None:
-            if ping(self.ip):
-                try:
-                    self.device = await client.p110(self.ip)
-                except Exception:
-                    self.device = None
-                    return
-            else:
+            try:
+                self.device = await client.p110(self.ip)
+            except Exception as e:
+                lm.log("Plug connection error:\n", e, msg_type=lm.LogType.Error)
+                self.device = None
                 return
         info = (await self.device.get_device_info()).to_dict()
         self.id = info["device_id"]
