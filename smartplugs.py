@@ -48,8 +48,8 @@ class PowerPlug(object):
         self.device = None
         if not self.virtual:
             self.cache = {
-                "is_on": (EPOCH, False),
-                "power_draw": (EPOCH, -1),
+                  "is_on": (EPOCH, False),
+                  "power_draw": (EPOCH, -1),
             }
         asyncio.run(self.reset())
 
@@ -125,7 +125,7 @@ class PowerPlug(object):
     def __str__(self):
         ip = self.ip
         if self.virtual:
-            ip = "VIRTUAL_PLUG"
+            ip = "VIRTUAL_PLUG "
         return stuff_back(str(self.name))+"@"+ip
 
 
@@ -205,6 +205,12 @@ class MasterSlave(object):
         if update_state is not None:
             self.last_update_state = update_state
 
+    def __str__(self):
+        out = "MasterSlave"
+        out += "\n      master Plugs:\n        "+"\n        ".join([str(P)+" connected="+str(P.device is not None) for P in self.masters])
+        out += "\n      slave  Plugs:\n        "+"\n        ".join([str(P)+" connected="+str(P.device is not None) for P in self.slaves])
+        return out
+
 
 class SyncMasterSlave(object):
 
@@ -251,6 +257,12 @@ class SyncMasterSlave(object):
                         lm.log("Set", slave, update_state, msg_type=lm.LogType.DataUpdated)
         if update_state is not None:
             self.last_update_state = update_state
+
+    def __str__(self):
+        out = "SyncSlave"
+        out += "\n      master Plugs:\n        "+"\n        ".join([str(P)+" connected="+str(P.device is not None) for P in self.masters])
+        out += "\n      slave  Plugs:\n        "+"\n        ".join([str(P)+" connected="+str(P.device is not None) for P in self.slaves])
+        return out
 
 
 class DelayController(object):
@@ -313,6 +325,12 @@ class DelayController(object):
                     await slave.on(self.current_state)
                     lm.log("Set", slave, self.current_state, msg_type=lm.LogType.DataUpdated)
 
+    def __str__(self):
+        out = "Delay"
+        out += "\n      master Plugs:\n        "+"\n        ".join([str(P)+" connected="+str(P.device is not None) for P in self.masters])
+        out += "\n      slave  Plugs:\n        "+"\n        ".join([str(P)+" connected="+str(P.device is not None) for P in self.slaves])
+        return out
+
 
 class DevicePingSlave(object):
 
@@ -361,6 +379,12 @@ class DevicePingSlave(object):
                         lm.log("Set", slave, update_state, msg_type=lm.LogType.DataUpdated)
         if update_state is not None:
             self.last_update_state = update_state
+
+    def __str__(self):
+        out = "DevicePingSlave"
+        out += "\n      master Plugs:\n        "+"\n        ".join([IP for IP in self.masters])
+        out += "\n      slave  Plugs:\n        "+"\n        ".join([str(P)+" connected="+str(P.device is not None) for P in self.slaves])
+        return out
 
 
 class SimpleTimeControl(object):
@@ -417,4 +441,10 @@ class SimpleTimeControl(object):
                         lm.log("Set", slave, update_state, msg_type=lm.LogType.DataUpdated)
         if update_state is not None:
             self.last_update_state = update_state
+
+    def __str__(self):
+        out = "SimpleTime"
+        out += "\n      master Plugs:\n        "+"\n        ".join([str(P)+" connected="+str(P.device is not None) for P in self.masters])
+        out += "\n      slave  Plugs:\n        "+"\n        ".join([str(P)+" connected="+str(P.device is not None) for P in self.slaves])
+        return out
 
