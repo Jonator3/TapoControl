@@ -5,6 +5,7 @@ from tapo import ApiClient
 import asyncio
 import logging_manager as lm
 import subprocess
+import os
 from datetime import datetime, time, timedelta
 import re
 
@@ -15,8 +16,9 @@ ping_cache = {}
 
 
 def ping(host_ip):
-    if ping_cache.get(host_ip, (EPOCH, False))[0] + CACHE_TIME < datetime.now():
-        return ping_cache.get(host_ip, (EPOCH, False))[1]
+    ct, cv = ping_cache.get(host_ip, (EPOCH, False))
+    if ct + CACHE_TIME > datetime.now():
+        return cv
     else:
         process = subprocess.Popen(['ping', '-W', '1', '-c', '1', host_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
@@ -122,16 +124,17 @@ class PowerPlug(object):
             self.cache["power_draw"] = (datetime.now(), (await self.device.get_current_power()).to_dict()["current_power"])
         return self.cache["power_draw"][1]
 
+    def clear_cache(self):
+        self.cache = {
+            "is_on": (EPOCH, False),
+            "power_draw": (EPOCH, -1),
+        }
+
     def __str__(self):
         ip = self.ip
         if self.virtual:
             ip = "VIRTUAL_PLUG "
         return stuff_back(str(self.name))+"@"+ip
-
-
-def init(user, password):
-    global client
-    client = ApiClient(user, password, 300)
 
 
 plugs: Dict[str, PowerPlug] = {}
@@ -144,15 +147,26 @@ def get_plug(ip):
         plugs[ip] = P
         return P
 
-
 async def reset_plugs():
     global plugs
     await asyncio.gather(*[P.reset() for P in plugs.values()])
 
-
 async def ensure_connection():
     global plugs
     await asyncio.gather(*[P.ensure_connection() for P in plugs.values()])
+
+
+def init(user, password, auto_reset_plugs=True):
+    global client
+    client = ApiClient(user, password, 300)
+    if auto_reset_plugs:
+        asyncio.run(reset_plugs())
+
+def clear_cache():
+    global ping_cache, plugs
+    ping_cache.clear()
+    for P in plugs.values():
+        P.clear_cache()
 
 
 class MasterSlave(object):
