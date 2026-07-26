@@ -7,11 +7,13 @@ class LogType(Enum):
     Error = 1
     SystemInfo = 2
     DataUpdated = 3
+    ConnectionOpen = 4
 
 COLORMAP = {
     LogType.DEFAULT: '\033[0m',
     LogType.Error: '\033[91m',
     LogType.SystemInfo: '\033[95m',
+    LogType.ConnectionOpen: '\033[96m',
     LogType.DataUpdated: '\033[94m',
 }
 MESSAGE_LOG = []
