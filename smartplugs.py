@@ -333,6 +333,8 @@ class DelayController(object):
                 for slave in self.slaves:
                     await slave.on(state)
                     lm.log("Set", slave, state, msg_type=lm.LogType.DataUpdated)
+            else:
+                break
         if self.force and (self.current_state is not None):
             for slave in self.slaves:
                 if slave.is_on() != self.current_state:
