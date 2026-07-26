@@ -53,7 +53,8 @@ class PowerPlug(object):
                   "is_on": (EPOCH, False),
                   "power_draw": (EPOCH, -1),
             }
-        asyncio.run(self.reset())
+        if asyncio.get_event_loop_policy()._local._loop is None:
+            asyncio.run(self.reset())
 
     async def poll_info(self):
         if self.virtual:
@@ -93,6 +94,7 @@ class PowerPlug(object):
             self.state = state
         if self.device is None:
             return
+        self.cache["is_on"] = (datetime.now(), state)
         if state:
             await self.device.on()
         else:
