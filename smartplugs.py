@@ -138,9 +138,17 @@ class PowerPlug(object):
 
 
 plugs: Dict[str, PowerPlug] = {}
+plug_aliases: Dict[str, str] = {}
+
+def add_plug_alias(reverence: str, alias: str):
+    global plug_aliases
+    plug_aliases[alias] = reverence
 
 def get_plug(reverence:str):
-    if reverence.startswith("#"):
+    global plugs
+    if reverence.startswith(":"):
+        return get_plug(plug_aliases[reverence[1:]])
+    elif reverence.startswith("#"):
         for P in plugs.values():
             if P.name == reverence[1:]:
                 return P

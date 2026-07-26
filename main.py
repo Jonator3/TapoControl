@@ -108,6 +108,12 @@ if __name__ == '__main__':
     controls = []
     set_cache_time(int(config["GENERAL"]["cache_time"]))
     smartplugs.init(config["GENERAL"]["tapo_user"], config["GENERAL"]["tapo_password"])
+    if config.has_section("PLUGS"):
+        for alias in config["PLUGS"]:
+            plug = config["PLUGS"][alias]
+            if not alias.startswith("_"):
+                smartplugs.add_plug_alias(plug, alias)
+            smartplugs.get_plug(plug) # ensure plug is listed and reverable by name
     for control in [sec for sec in config.sections() if sec.startswith("CONTROLLER_")]:
         con_type = config[control]["type"]
         con = con_types.get(con_type).from_config(config[control])
