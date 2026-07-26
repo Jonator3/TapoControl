@@ -70,7 +70,8 @@ def console_io_loop():
             "set": lambda P, S: asyncio.run(smartplugs.get_plug(P).on(S=='1' or S=='True')),
             "toggle": lambda P: asyncio.run(smartplugs.get_plug(P).toggle()),
         },
-        "reinit": lambda: smartplugs.init(config["GENERAL"]["tapo_user"], config["GENERAL"]["tapo_password"])
+        "reinit": lambda: smartplugs.init(config["GENERAL"]["tapo_user"], config["GENERAL"]["tapo_password"]),
+        "ping": smartplugs.ping,
     }
     while True:
         try:
