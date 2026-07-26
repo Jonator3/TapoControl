@@ -139,12 +139,16 @@ class PowerPlug(object):
 
 plugs: Dict[str, PowerPlug] = {}
 
-def get_plug(ip):
-    if ip in plugs:
-        return plugs[ip]
+def get_plug(reverence:str):
+    if reverence.startswith("#"):
+        for P in plugs.values():
+            if P.name == reverence[1:]:
+                return P
+    if reverence in plugs:
+        return plugs[reverence]
     else:
-        P = PowerPlug(ip)
-        plugs[ip] = P
+        P = PowerPlug(reverence)
+        plugs[reverence] = P
         return P
 
 async def reset_plugs():
