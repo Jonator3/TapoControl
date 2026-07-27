@@ -20,7 +20,7 @@ def ping(host_ip):
     if ct + CACHE_TIME > datetime.now():
         return cv
     else:
-        process = subprocess.Popen(['ping', '-W', '1', '-c', '1', host_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(['ping', '-W', '3', '-c', '3', host_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         ping_cache[host_ip] = (datetime.now(), process.returncode == 0)
         return process.returncode == 0
