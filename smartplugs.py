@@ -339,15 +339,15 @@ class DelayController(object):
                 update_state = False
                 if self.update_off:
                     self.mem.append((now + timedelta(minutes=self.delay), False))
-                    if self.cancel_changes:
-                        self.mem = [(t, v) for t, v in self.mem if v==False]
+                if self.cancel_changes:
+                    self.mem = [(t, v) for t, v in self.mem if v==False]
         else:
             if master_state:
                 update_state = True
                 if self.update_on:
                     self.mem.append((now + timedelta(minutes=self.delay), True))
-                    if self.cancel_changes:
-                        self.mem = [(t, v) for t, v in self.mem if v==True]
+                if self.cancel_changes:
+                    self.mem = [(t, v) for t, v in self.mem if v==True]
         if update_state is not None:
             self.last_update_state = update_state
         while len(self.mem) > 0:
