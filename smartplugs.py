@@ -300,13 +300,14 @@ class SyncMasterSlave(object):
 
 class DelayController(object):
 
-    def __init__(self, masters: List[PowerPlug], slaves: List[PowerPlug], *, delay:int = 30, trigger:Callable[[Iterable[object]], bool] = any, invert: bool = False, update_on: bool = True, update_off: bool = True, force: bool = False):
+    def __init__(self, masters: List[PowerPlug], slaves: List[PowerPlug], *, delay:int = 30, trigger:Callable[[Iterable[object]], bool] = any, invert: bool = False, cancel_changes:bool = False, update_on: bool = True, update_off: bool = True, force: bool = False):
         self.masters = masters
         self.slaves = slaves
         self.delay = delay
         self.invert = invert
         self.trigger = trigger
         self.force = force
+        self.cancel_changes = cancel_changes
         self.update_on = update_on
         self.update_off = update_off
         self.last_update_state = None
@@ -321,6 +322,7 @@ class DelayController(object):
             delay=int(config["delay"]),
             trigger={"any": any, "all": all}.get(config.get("trigger", None), any),
             invert=config.get("invert", '0')=='1' or config.get("invert", '0')=='true',
+            cancel_changes=config.get("cancel_changes", '1')=='1' or config.get("cancel_changes", '1')=='true',
             update_on=config.get("update_on", '1')=='1' or config.get("update_on", '1')=='true',
             update_off=config.get("update_off", '1')=='1' or config.get("update_off", '1')=='true',
             force=config.get("force", '0')=='1' or config.get("force", '0')=='true'
@@ -337,11 +339,15 @@ class DelayController(object):
                 update_state = False
                 if self.update_off:
                     self.mem.append((now + timedelta(minutes=self.delay), False))
+                    if self.cancel_changes:
+                        self.mem = [(t, v) for t, v in self.mem if v==False]
         else:
             if master_state:
                 update_state = True
                 if self.update_on:
                     self.mem.append((now + timedelta(minutes=self.delay), True))
+                    if self.cancel_changes:
+                        self.mem = [(t, v) for t, v in self.mem if v==True]
         if update_state is not None:
             self.last_update_state = update_state
         while len(self.mem) > 0:
