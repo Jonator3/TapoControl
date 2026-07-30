@@ -20,7 +20,7 @@ def ping(host_ip):
     if ct + CACHE_TIME > datetime.now():
         return cv
     else:
-        process = subprocess.Popen(['ping', '-W', '1', '-c', '1', host_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(['ping', '-W', '3', '-c', '3', host_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         ping_cache[host_ip] = (datetime.now(), process.returncode == 0)
         return process.returncode == 0
@@ -53,7 +53,8 @@ class PowerPlug(object):
                   "is_on": (EPOCH, False),
                   "power_draw": (EPOCH, -1),
             }
-        asyncio.run(self.reset())
+        if asyncio.get_event_loop_policy()._local._loop is None:
+            asyncio.run(self.reset())
 
     async def poll_info(self):
         if self.virtual:
@@ -93,6 +94,7 @@ class PowerPlug(object):
             self.state = state
         if self.device is None:
             return
+        self.cache["is_on"] = (datetime.now(), state)
         if state:
             await self.device.on()
         else:
@@ -144,20 +146,25 @@ def add_plug_alias(reverence: str, alias: str):
     global plug_aliases
     plug_aliases[alias] = reverence
 
-def get_plug(reverence:str):
+def get_plug(reverence:str, *, no_create:bool = False) -> PowerPlug | None:
     global plugs
+    if reverence == "":
+        return None
     if reverence.startswith(":"):
-        return get_plug(plug_aliases[reverence[1:]])
+        return get_plug(plug_aliases.get(reverence[1:], ""), no_create=no_create)
     elif reverence.startswith("#"):
         for P in plugs.values():
             if P.name == reverence[1:]:
                 return P
+        return None
     if reverence in plugs:
         return plugs[reverence]
-    else:
+    elif not no_create:
         P = PowerPlug(reverence)
         plugs[reverence] = P
         return P
+    else:
+        return None
 
 async def reset_plugs():
     global plugs

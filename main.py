@@ -27,7 +27,7 @@ con_types = {
 }
 controls = []
 config = ConfigParser()
-config["General"] = {"poll_time": "5", "cache_time": "15", "enable_rest_api": "0"}
+config["GENERAL"] = {"poll_time": "5", "cache_time": "15", "enable_rest_api": "0"}
 config["REST_API"] = {"host": "127.0.0.1", "port": "8080"}
 
 
@@ -120,6 +120,11 @@ if __name__ == '__main__':
         con = con_types.get(con_type).from_config(config[control])
         controls.append(con)
     lm.log("Starting Software.\n\t\twith", len(smartplugs.plugs), "Plugs, (" + str(len([P for P in smartplugs.plugs.values() if P.virtual])), "Virtual) and", len(controls), "Controllers", msg_type=lm.LogType.SystemInfo)
-    Thread(target=console_io_loop, daemon=True).start()
     should_run = True
-    asyncio.run(loop())
+    Thread(target=console_io_loop, daemon=True).start()
+    if config["GENERAL"]["enable_rest_api"] == "True" or config["GENERAL"]["enable_rest_api"] == "1":
+        import rest_api
+        Thread(target=asyncio.run, daemon=True, args=(loop(),)).start()
+        rest_api.run(config["REST_API"]["host"], int(config["REST_API"]["port"]))
+    else:
+        asyncio.run(loop())
