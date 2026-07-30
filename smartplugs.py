@@ -146,20 +146,25 @@ def add_plug_alias(reverence: str, alias: str):
     global plug_aliases
     plug_aliases[alias] = reverence
 
-def get_plug(reverence:str):
+def get_plug(reverence:str, *, no_create:bool = False) -> PowerPlug | None:
     global plugs
+    if reverence == "":
+        return None
     if reverence.startswith(":"):
-        return get_plug(plug_aliases[reverence[1:]])
+        return get_plug(plug_aliases.get(reverence[1:], ""), no_create=no_create)
     elif reverence.startswith("#"):
         for P in plugs.values():
             if P.name == reverence[1:]:
                 return P
+        return None
     if reverence in plugs:
         return plugs[reverence]
-    else:
+    elif not no_create:
         P = PowerPlug(reverence)
         plugs[reverence] = P
         return P
+    else:
+        return None
 
 async def reset_plugs():
     global plugs

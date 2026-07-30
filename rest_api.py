@@ -7,7 +7,7 @@ import logging_manager as lm
 
 
 async def post_action(request: web.Request):
-    plug = smartplugs.get_plug(request.match_info.get('plug', ""))
+    plug = smartplugs.get_plug(request.match_info.get('plug', ""), no_create=True)
     if plug is None:
         return web.Response(status=404)
     await plug.poll_info()
@@ -34,7 +34,7 @@ async def get_plugs(request: web.Request):
     return web.Response(text=output, content_type="text/csv")
 
 async def get_plug(request: web.Request):
-    plug = smartplugs.get_plug(request.match_info.get('plug', ""))
+    plug = smartplugs.get_plug(request.match_info.get('plug', ""), no_create=True)
     if plug is None:
         return web.Response(status=404)
     await plug.poll_info()
